@@ -1,3 +1,16 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffc20e">
+<meta name="description" content="Menú digital de Play Burguer Fast Food: hamburguesas, perros, picadas, salchipapas y bebidas.">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
 <title>Menú Play Burguer</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -158,7 +171,8 @@ h2{font-family:var(--font-display);font-weight:700;font-size:28px;margin:0;line-
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--yellow);color:var(--choco);font-weight:800;padding:10px 18px;border-radius:999px;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.2);max-width:calc(100% - 32px)}
 textarea.copybox{width:100%;font:inherit;font-size:14px;background:var(--panel);color:var(--fg);border:2px solid var(--line);border-radius:14px;padding:10px}
 </style>
-
+</head>
+<body>
 <div class="bgart" aria-hidden="true"></div>
 <header class="brand">
   <div class="wrap">
@@ -445,3 +459,5 @@ document.getElementById("chips").addEventListener("click", e => {
   if (target) requestAnimationFrame(() => target.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }));
 });
 </script>
+</body>
+</html>
