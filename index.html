@@ -168,6 +168,22 @@ h2{font-family:var(--font-display);font-weight:700;font-size:28px;margin:0;line-
 .sheet-actions{display:flex;flex-wrap:wrap;gap:10px}
 .sheet-actions .btn{flex:1 1 160px}
 .note{margin:0;color:var(--muted);font-size:13px}
+.ask-bg{position:fixed;inset:0;z-index:40;background:rgba(30,14,5,.65)}
+.ask{position:fixed;z-index:41;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 32px));max-height:calc(100% - 32px);overflow-y:auto;background:var(--bg);border-radius:24px;border:3px solid var(--red);box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.ask::before{content:"";display:block;height:6px;background:linear-gradient(90deg,var(--blue) 0 25%,var(--red) 25% 50%,var(--pink) 50% 75%,var(--orange) 75%)}
+.ask-step{padding:20px 20px 22px;display:grid;gap:12px;text-align:center}
+.ask h2{font-size:26px}
+.ask p{margin:0;color:var(--muted);font-weight:600}
+.ask p b{color:var(--fg)}
+.ask-opts{display:grid;gap:10px;margin-top:4px}
+.opt{font:inherit;display:flex;align-items:center;gap:12px;text-align:left;cursor:pointer;text-decoration:none;color:var(--fg);background:var(--panel);border:2px solid var(--line);border-radius:18px;padding:14px 16px}
+.opt:hover{border-color:var(--red)}
+.opt:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.opt .ico{font-size:30px;line-height:1}
+.opt b{display:block;font-family:var(--font-display);font-weight:600;font-size:18px;color:var(--head)}
+.opt small{display:block;color:var(--muted);font-weight:600;font-size:13px}
+.big-ico{font-size:54px;line-height:1}
+.wa-num{font-size:14px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--yellow);color:var(--choco);font-weight:800;padding:10px 18px;border-radius:999px;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.2);max-width:calc(100% - 32px)}
 textarea.copybox{width:100%;font:inherit;font-size:14px;background:var(--panel);color:var(--fg);border:2px solid var(--line);border-radius:14px;padding:10px}
 </style>
@@ -232,11 +248,37 @@ textarea.copybox{width:100%;font:inherit;font-size:14px;background:var(--panel);
     <div class="lines" id="lines"></div>
     <div class="total"><span>Total</span><strong id="sheetTotal">$0</strong></div>
     <div class="sheet-actions">
-      <button class="btn" id="copyBtn" type="button">Copiar pedido</button>
-      <a class="btn ghost" id="waBtn" href="#" target="_blank" rel="noopener" hidden>Enviar por WhatsApp</a>
+      <button class="btn" id="sendBtn" type="button">Enviar pedido</button>
+      <button class="btn ghost" id="copyBtn" type="button">Copiar pedido</button>
       <button class="btn ghost" id="clearBtn" type="button">Vaciar</button>
     </div>
-    <p class="note">Muéstrale este pedido al mesero o cópialo para enviarlo. Precios en pesos colombianos.</p>
+    <p class="note">Precios en pesos colombianos.</p>
+  </div>
+</div>
+
+<div class="ask-bg" id="askBg" hidden></div>
+<div class="ask" id="ask" role="dialog" aria-modal="true" aria-labelledby="askTitle" hidden>
+  <div class="ask-step" id="askWhere">
+    <h2 id="askTitle">¿Dónde estás?</h2>
+    <p>Cuéntanos para saber cómo tomar tu pedido.</p>
+    <div class="ask-opts">
+      <button class="opt" id="optLocal" type="button"><span class="ico" aria-hidden="true">🍔</span><span><b>Estoy en el local</b><small>Estoy en una mesa de Play Burguer</small></span></button>
+      <a class="opt" id="optAway" href="#" target="_blank" rel="noopener"><span class="ico" aria-hidden="true">🛵</span><span><b>Estoy fuera del local</b><small>Domicilio o para recoger · se abre WhatsApp</small></span></a>
+    </div>
+    <button class="btn ghost" id="askCancel" type="button">Cancelar</button>
+  </div>
+  <div class="ask-step" id="askWaiter" hidden>
+    <div class="big-ico" aria-hidden="true">🙋</div>
+    <h2>¡Llama al mesero!</h2>
+    <p>Como estás en el local, nuestro mesero tomará tu pedido en la mesa. Puedes mostrarle esta lista.</p>
+    <button class="btn" id="askOk" type="button">Entendido</button>
+  </div>
+  <div class="ask-step" id="askSent" hidden>
+    <div class="big-ico" aria-hidden="true">💬</div>
+    <h2>Abriendo WhatsApp…</h2>
+    <p>Tu pedido ya va escrito. Solo dale <b>enviar</b> en el chat y te confirmamos el precio final.</p>
+    <p class="wa-num">WhatsApp: <b>320 404 2326</b></p>
+    <button class="btn" id="askDone" type="button">Listo</button>
   </div>
 </div>
 
@@ -244,7 +286,7 @@ textarea.copybox{width:100%;font:inherit;font-size:14px;background:var(--panel);
 
 <script>
 // Número de WhatsApp para pedidos (formato internacional sin "+", ej: "573001234567"). Vacío = botón oculto.
-const WHATSAPP = "";
+const WHATSAPP = "573204042326";
 
 const MENU = [
   {id:"hamburguesas", name:"Hamburguesas", sub:"Elige tu nivel de pecado.", items:[
@@ -388,8 +430,6 @@ function update(){
       <div class="sub-t">${order[k]} × ${money(it.price)} = ${money(order[k] * it.price)}</div></div>`;
   }).join("") || `<p class="note">Tu pedido está vacío.</p>`;
   if (count === 0) closeSheet();
-  const wa = document.getElementById("waBtn");
-  if (WHATSAPP && count) { wa.hidden = false; wa.href = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(orderText())}`; } else { wa.hidden = true; }
   save();
 }
 
@@ -420,7 +460,24 @@ document.getElementById("lines").addEventListener("click", e => {
 document.getElementById("openSheet").addEventListener("click", openSheet);
 document.getElementById("closeSheet").addEventListener("click", closeSheet);
 document.getElementById("sheetBg").addEventListener("click", closeSheet);
-document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
+document.addEventListener("keydown", e => { if (e.key !== "Escape") return; if (!document.getElementById("ask").hidden) closeAsk(); else closeSheet(); });
+
+// Enviar pedido: primero pregunta dónde está el cliente
+function showStep(id){ ["askWhere","askWaiter","askSent"].forEach(s => document.getElementById(s).hidden = s !== id); }
+function openAsk(){
+  document.getElementById("optAway").href = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(orderText())}`;
+  showStep("askWhere");
+  document.getElementById("ask").hidden = false; document.getElementById("askBg").hidden = false;
+  document.getElementById("optLocal").focus();
+}
+function closeAsk(){ document.getElementById("ask").hidden = true; document.getElementById("askBg").hidden = true; }
+document.getElementById("sendBtn").addEventListener("click", openAsk);
+document.getElementById("askCancel").addEventListener("click", closeAsk);
+document.getElementById("askBg").addEventListener("click", closeAsk);
+document.getElementById("optLocal").addEventListener("click", () => { showStep("askWaiter"); document.getElementById("askOk").focus(); });
+document.getElementById("optAway").addEventListener("click", () => { setTimeout(() => { showStep("askSent"); document.getElementById("askDone").focus(); }, 50); });
+document.getElementById("askOk").addEventListener("click", closeAsk);
+document.getElementById("askDone").addEventListener("click", closeAsk);
 document.getElementById("clearBtn").addEventListener("click", () => { order = {}; update(); toast("Pedido vacío"); });
 document.getElementById("copyBtn").addEventListener("click", () => {
   const text = orderText();
