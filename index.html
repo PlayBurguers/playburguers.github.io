@@ -249,7 +249,6 @@ textarea.copybox{width:100%;font:inherit;font-size:14px;background:var(--panel);
     <div class="total"><span>Total</span><strong id="sheetTotal">$0</strong></div>
     <div class="sheet-actions">
       <button class="btn" id="sendBtn" type="button">Enviar pedido</button>
-      <button class="btn ghost" id="copyBtn" type="button">Copiar pedido</button>
       <button class="btn ghost" id="clearBtn" type="button">Vaciar</button>
     </div>
     <p class="note">Precios en pesos colombianos.</p>
@@ -479,22 +478,6 @@ document.getElementById("optAway").addEventListener("click", () => { setTimeout(
 document.getElementById("askOk").addEventListener("click", closeAsk);
 document.getElementById("askDone").addEventListener("click", closeAsk);
 document.getElementById("clearBtn").addEventListener("click", () => { order = {}; update(); toast("Pedido vacío"); });
-document.getElementById("copyBtn").addEventListener("click", () => {
-  const text = orderText();
-  // 1) Copia directa (funciona aunque el navegador bloquee la API moderna)
-  let ok = false;
-  const ta = document.createElement("textarea");
-  ta.value = text; ta.setAttribute("readonly", "");
-  ta.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none";
-  document.body.appendChild(ta);
-  ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
-  try { ok = document.execCommand("copy"); } catch(e) { ok = false; }
-  ta.remove();
-  if (ok) { toast("¡Pedido copiado!"); return; }
-  // 2) API moderna del portapapeles
-  try { navigator.clipboard.writeText(text).then(() => toast("¡Pedido copiado!"), () => toast("No se pudo copiar el pedido")); }
-  catch(e) { toast("No se pudo copiar el pedido"); }
-});
 
 function applyFilter(raw){
   const q = norm(raw.trim()); let any = false;
